@@ -1,4 +1,4 @@
-classdef scene
+classdef scene < handle
     % The main class used to create a scene
     
     properties
@@ -9,6 +9,21 @@ classdef scene
     end
     
     methods
+        function obj = scene(givenBorder, givenTriangleList)
+            % constructor that takes given values
+            if nargin == 1
+                % just the border is given
+                obj.border = givenBorder;
+                obj.triangleList = [];
+            end
+            if nargin == 2
+                % all variables are given
+                obj.border = givenBorder;
+                obj.triangleList = givenTriangleList;
+            end
+        end
+        
+        
         function plotScene(obj)
             % plots the entire Scene by plotting each individual triangle
             
@@ -36,7 +51,7 @@ classdef scene
         end
         
         
-        function addCuboid(obj, positionX, positionY, positionZ, width, depth, hight, refinement)
+        function addCuboid(obj, positionX, positionY, positionZ, width, depth, hight, refinement, color)
                         
             % position of the cuboid in the form of [positionX positionY positionZ]
             % width measures the cuboid in x direction
@@ -44,26 +59,49 @@ classdef scene
             % hight measures the cuboid in z direction
             % refinement is an integer which specifies the 
                 % amount vertices in a 1 m line (Unit of the grid is m)
-
-
+            
+            
+            w = floor(width*refinement); % Number of vertices in x (width) direction
+            d = floor(depth*refinement); % Number of vertices in y (depth) direction
+            h = floor(hight*refinement); % Number of vertices in z (hight) direction
+            
+            2*w*d*h;
+            
             % create 2 sides of the cuboid (floor and ceiling)
-            for i = positionX:1/refinement:positionX+width-1/refinement
-                for j = positionY:1/refinement:positionY+depth-1/refinement
-                    % TODO
+            for i = positionX:width/w:positionX+width-width/w
+                for j = positionY:depth/d:positionY+depth-depth/d
+                    obj.triangleList(end + 1) = triangle([i j positionZ], [i+width/w j positionZ], [i j+depth/d positionZ], color);
+                    obj.triangleList(end + 1) = triangle([i+width/w j positionZ], [i j+depth/d positionZ], [i+width/w j+depth/d positionZ], color);
+                    
+                    obj.triangleList(end + 1) = triangle([i j positionZ+hight], [i+width/w j positionZ+hight], [i j+depth/d positionZ+hight], color);
+                    obj.triangleList(end + 1) = triangle([i+width/w j positionZ+hight], [i j+depth/d positionZ+hight], [i+width/w j+depth/d positionZ+hight], color);
+                
                 end
             end
 
             % create 2 sides of the cuboid (front and back)
-            for i = positionX:1/refinement:positionX+width-1/refinement
-                for j = positionZ:1/refinement:positionZ+hight-1/refinement
-                    % TODO
+            for i = positionX:width/w:positionX+width-width/w
+                for j = positionZ:hight/h:positionZ+hight-hight/h
+                    
+                    obj.triangleList(end + 1) = triangle([i positionY j], [i+width/w positionY j], [i positionY j+hight/h], color);
+                    obj.triangleList(end + 1) = triangle([i+width/w positionY j+hight/h], [i+width/w positionY j], [i positionY j+hight/h], color);
+                    
+                    obj.triangleList(end + 1) = triangle([i positionY+depth j], [i+width/w positionY+depth j], [i positionY+depth j+hight/h], color);
+                    obj.triangleList(end + 1) = triangle([i+width/w positionY+depth j+hight/h], [i+width/w positionY+depth j], [i positionY+depth j+hight/h], color);
+                    
                 end
             end
 
             % create 2 sides of the cuboid (front and back)
-            for i = positionY:1/refinement:positionY+depth-1/refinement
-                for j = positionZ:1/refinement:positionZ+hight-1/refinement
-                    % TODO
+            for i = positionY:depth/d:positionY+depth-depth/d
+                for j = positionZ:hight/h:positionZ+hight-hight/h
+                    
+                    obj.triangleList(end + 1) = triangle([positionX i j], [positionX i+depth/d j], [positionX i j+hight/h], color);
+                    obj.triangleList(end + 1) = triangle([positionX i+depth/d j+hight/h], [positionX i+depth/d j], [positionX i j+hight/h], color);
+                    
+                    obj.triangleList(end + 1) = triangle([positionX+width i j], [positionX+width i+depth/d j], [positionX+width i j+hight/h], color);
+                    obj.triangleList(end + 1) = triangle([positionX+width i+depth/d j+hight/h], [positionX+width i+depth/d j], [positionX+width i j+hight/h], color);
+                    
                 end
             end
             
