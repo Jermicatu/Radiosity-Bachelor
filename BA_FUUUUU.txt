@@ -1,0 +1,32 @@
+Gliederung
+
+1 Einführung
+2 Herleitung Gleichung
+3 analysis
+allgemein Numerik "Brille"
+4 Implementation
+5 Bsp/experimente/Mun Untersuchung
+6 Zusammenfassung/ Ausblick
+7 Fazit/Persöhliches
+8 Selbständikeitserklärung (Siehe PO)
+9 Bibliographie
+
+
+-mathematische/numerische Frage
+--> Lösbarkeit/Räume
+--> eindeutige Lösungen
+--> wohlgestelltheit
+--> stückweise konst/linear Matrix invertierbar
+--> kontinuierlich Formulieren vs. diskret - Wann konvergierts?
+--> Fehlergrade?
+--> Experimentelle Lösungen/Verfeinerungen
+--> Konditionierung der Matrix
+--> Lgs-Löser
+
+
+beranden (Wand generieren)
+Neue Literatur
+
+https://sci-hub.hkvisa.net/10.1007/bf02020429
+https://dl.acm.org/doi/pdf/10.1145/258734.258769
+https://sci-hub.hkvisa.net/10.1093/imanum/20.2.303
