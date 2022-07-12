@@ -11,13 +11,19 @@ classdef scene < handle
     end
     
     methods
-        function obj = scene(givenBorder, givenTriangleList, givenRefinement)
+        function obj = scene(givenBorder, givenRefinement, givenTriangleList)
             % constructor that takes given values
             
-            % if nargin == 1
-            obj.border = givenBorder;
-            obj.triangleList = givenTriangleList;
-            obj.refinement = givenRefinement;
+            if nargin == 3 % 3 inputs
+                obj.border = givenBorder;
+                obj.refinement = givenRefinement;
+                obj.triangleList = givenTriangleList;
+            end
+            if nargin == 2 % 2 inputs - no givenTriangleList
+                obj.border = givenBorder;
+                obj.refinement = givenRefinement;
+                obj.triangleList = triangle.empty;
+            end
             
             width = givenBorder(1);
             depth = givenBorder(2);
