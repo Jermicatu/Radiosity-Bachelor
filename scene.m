@@ -24,78 +24,57 @@ classdef scene < handle
                 obj.refinement = givenRefinement;
                 obj.triangleList = triangle.empty;
             end
-            
-            width = givenBorder(1);
-            depth = givenBorder(2);
-            hight = givenBorder(3);
-            
-            % the reflection of the wall of the room is white by default
-            reflection = [1 1 1];
-            
-            w = floor(width*givenRefinement); % Number of vertices in x (width) direction
-            d = floor(depth*givenRefinement); % Number of vertices in y (depth) direction
-            h = floor(hight*givenRefinement); % Number of vertices in z (hight) direction
-            
-%            % create floor of the room
-%            normal = [0 0 1]; % normal for the following triangles
-%            for i = 0:width/w:width-width/w
-%                for j = 0:depth/d:0+depth-depth/d
-%                    obj.triangleList(end + 1) = triangle([i j 0], [i+width/w j 0], [i j+depth/d 0], normal, reflection);
-%                    obj.triangleList(end + 1) = triangle([i+width/w j 0], [i j+depth/d 0], [i+width/w j+depth/d 0], normal, reflection);
-%                end
-%            end
-%
-            % create left wall of the room
-            normal = [0 1 0]; % normal for the following triangles
-            for i = 0:width/w:+width-width/w
-                for j = 0:hight/h:+hight-hight/h
-                    obj.triangleList(end + 1) = triangle([i 0 j], [i+width/w 0 j], [i 0 j+hight/h], normal, reflection);
-                    obj.triangleList(end + 1) = triangle([i+width/w 0 j+hight/h], [i+width/w 0 j], [i 0 j+hight/h], normal, reflection);
-                end
-            end
-%
-%            % create front of room
-%            normal = [1 0 0]; % normal for the following triangles
-%            for i = 0:depth/d:depth-depth/d
-%                for j = 0:hight/h:hight-hight/h
-%                    obj.triangleList(end + 1) = triangle([0 i j], [0 i+depth/d j], [0 i j+hight/h], normal, reflection);
-%                    obj.triangleList(end + 1) = triangle([0 i+depth/d j+hight/h], [0 i+depth/d j], [0 i j+hight/h], normal, reflection);
-%                end
-%            end
-            
-            
         end
         
         function visTerm = checkVisible (obj, i, j)
             % checks if there is a triangle between x_i and x_j obstructing
             % the vision between them
-            
-            % define ray from x_i to x_j as function
-            line = @(x) x*(obj.triangleList(j).normal - obj.triangleList(i).normal);
+            lineDirection = obj.triangleList(j).middle - obj.triangleList(i).middle;
+            lineStart = obj.triangleList(i).middle;
             
             % check where the ray intersects with each triangle till 
             % there is one in the way or all have been checked
             n = length(obj.triangleList);
-            syms x y z
             k = 1;
             while k  < n+1
                 if k == i
                     % to make sure there is no issue
                     k = k+1;
                 else
-                    % define triangle as function
-                    area = @(y, z) obj.triangleList(k).point1 + y*obj.triangleList(k).point2 + z*obj.triangleList(k).point3;
-                    S = solve(line(x) == area(y, z), [x, y, z]);
-                    if 0 < S.x & (S.y + S.z) < 1  & S.x  <= 1
-                        visTerm = 1;
-                        k = n+2; % set k above breakpoint for loop
-                    else
+                    planeMiddle = obj.triangleList(k).middle;
+                    planeNormal = obj.triangleList(k).normal;
+                    
+                    if dot(lineDirection, planeNormal) == 0
+                        % line parallel so no intersection
                         k = k+1; % move k one step ahead
+                    else
+                        distance = dot((planeMiddle - lineStart), planeNormal)/dot(lineDirection, planeNormal);
+                        if 0 < distance && distance < 1
+                            % check if intersection is at triangle
+                            intersection = lineStart + distance*lineDirection;
+                            triangleStart = obj.triangleList(k).point1;
+                            triangleSide1 = obj.triangleList(k).point2 - obj.triangleList(k).point1;
+                            triangleSide2 = obj.triangleList(k).point3 - obj.triangleList(k).point1;
+                            
+                            S = linsolve([transpose(triangleSide1) transpose(triangleSide2)], transpose(intersection - triangleStart));
+                            
+                            if (S(1) >= 0) && (S(2) >= 0) && (1 >= S(1)+S(2))
+                                visTerm = 0; % the vision is obstructed
+                                             % so set the value to 0
+                                k = n+2; % set k above breakpoint for loop
+                            else
+                                k = k+1; % move k one step ahead
+                            end
+                        else
+                            % intersection can not be between x_i and x_j
+                            k = k+1; % move k one step ahead
+                        end
                     end
                 end
             end
             if k == n+1
-                visTerm = 0;
+                visTerm = 1; % the vision is not obstructed
+                             % so set the value to 1
             end
         end
         
@@ -109,12 +88,11 @@ classdef scene < handle
             middle2 = obj.triangleList(j).middle;
             
             % calculate cos(theta1) and cos(theta2) as in the paper
-            cos1 = normal1*transpose(middle2 - middle1);
-            cos2 = normal2*transpose(middle1 - middle2);
-            
-            if cos1 <= 0 || cos2 <= 0
-                % light would have to go through
-                % the object therefore we get
+            term1 = normal1*transpose(middle2 - middle1);
+            term2 = normal2*transpose(middle1 - middle2);
+            if term1 <= 0 || term2 <= 0
+                % cos(theta) would be negative
+                % light would have to go through  the object 
                 geoTerm = 0;
             elseif obj.checkVisible(i,j) == 0
                 % visibility check tells us that                 
@@ -125,7 +103,7 @@ classdef scene < handle
                 % if none of the above is true then there is a direct
                 % unobscured line between x_i and x_j
                 % we calculate G(x_i,x_j)
-                geoTerm = cos1*cos2/norm(middle1 - middle2);
+                geoTerm = term1*term2/(norm(middle1 - middle2))^3;
             end
         end
         
@@ -148,33 +126,38 @@ classdef scene < handle
                 eRed(i) = obj.triangleList(i).emission(1);
                 eGreen(i) = obj.triangleList(i).emission(2);
                 eBlue(i) = obj.triangleList(i).emission(3);
-                for j = 1:1:n
+                
+                for j = 1:1:i
                     % calculate geometrical Term
                     geoTerm = obj.calcGeoTerm(i, j);
                     
-                    %i
                     if geoTerm ~= 0
                         % set values of the matrices
-                        gRed(i,j) = obj.triangleList(j).reflection(1)*geoTerm*obj.triangleList(j).area(1);
-                        gGreen(i,j) = obj.triangleList(j).reflection(2)*geoTerm*obj.triangleList(j).area(1);
-                        gBlue(i,j) = obj.triangleList(j).reflection(3)*geoTerm*obj.triangleList(j).area(1);
+                        gRed(i,j) = obj.triangleList(i).reflection(1)*geoTerm*obj.triangleList(j).area;
+                        gGreen(i,j) = obj.triangleList(i).reflection(2)*geoTerm*obj.triangleList(j).area;
+                        gBlue(i,j) = obj.triangleList(i).reflection(3)*geoTerm*obj.triangleList(j).area;
+                        
+                        gRed(j,i) = obj.triangleList(j).reflection(1)*geoTerm*obj.triangleList(i).area;
+                        gGreen(j,i) = obj.triangleList(j).reflection(2)*geoTerm*obj.triangleList(i).area;
+                        gBlue(j,i) = obj.triangleList(j).reflection(3)*geoTerm*obj.triangleList(i).area;
                     end
                 end
             end
             
             % calculate lighting vectors
-            bRed = gRed' * eRed;
-            bGreen = gGreen' * eGreen;
-            bBlue = gBlue' * eBlue;
+            bRed = (eye(n)-gRed) \ eRed;
+            bGreen = (eye(n)-gGreen) \ eGreen;
+            bBlue = (eye(n)-gBlue) \ eBlue;
+            
             for i = 1:1:n
                 %set values in triangles
-                obj.triangleList(i).color(1) = bRed(i) + obj.triangleList(i).emission(1);
-                obj.triangleList(i).color(2) = bGreen(i) + obj.triangleList(i).emission(2);
-                obj.triangleList(i).color(3) = bBlue(i) + obj.triangleList(i).emission(3);
+                obj.triangleList(i).color(1) = bRed(i); %min(max(bRed(i),0),1);
+                obj.triangleList(i).color(2) = bGreen(i); %min(max(bGreen(i),0),1);
+                obj.triangleList(i).color(3) = bBlue(i); %min(max(bBlue(i),0),1);
             end
         end
             
-        function plotScene(obj)
+        function plotScene(obj, grid)
             % plots the entire Scene by plotting each individual triangle
             
             % hold on 
@@ -219,21 +202,17 @@ classdef scene < handle
                 cMatrix(1, i, :) = obj.triangleList(i).color;
             end
             
-            patch(xMatrix, yMatrix, zMatrix, cMatrix) %, 'LineStyle', 'none');
-            view(obj.border);
-            for i = 1:1:length(obj.triangleList)
-                show = obj.triangleList(i)
+            if grid == true
+                % plot with grid
+                patch(xMatrix, yMatrix, zMatrix, cMatrix);
+            else
+                % plot without grid
+                patch(xMatrix, yMatrix, zMatrix, cMatrix, 'LineStyle', 'none');
             end
             
-            % ploting each triangle individually
-            %for t = obj.triangleList
-            %    fill3([t.point1(1) t.point2(1) t.point3(1)], [t.point1(2) t.point2(2) t.point3(2)], [t.point1(3) t.point2(3) t.point3(3)], t.color); % 'LineStyle','none'
-            %end
-            
-            % hold needs to end
-            % hold off
+            % sets viewpoint to obj.border
+            view(obj.border);
         end
-        
         
         function addCuboid(obj, positionX, positionY, positionZ, width, depth, hight, reflection)
                         
@@ -292,6 +271,92 @@ classdef scene < handle
             end
             
         end
+        
+        function addFloor(obj)
+            % create the floor of the room
+            
+            width = obj.border(1);
+            depth = obj.border(2);
+            
+            % the reflection of the wall of the room is white by default
+            reflection = [1 1 1];
+            
+            w = floor(width*obj.refinement); % Number of vertices in x (width) direction
+            d = floor(depth*obj.refinement); % Number of vertices in y (depth) direction
+            
+            % create floor of the room
+            normal = [0 0 1]; % normal for the following triangles
+            for i = 0:width/w:width-width/w
+                for j = 0:depth/d:0+depth-depth/d
+                    obj.triangleList(end + 1) = triangle([i j 0], [i+width/w j 0], [i j+depth/d 0], normal, reflection);
+                    obj.triangleList(end + 1) = triangle([i+width/w j 0], [i j+depth/d 0], [i+width/w j+depth/d 0], normal, reflection);
+                end
+            end
+        end
+        
+        function addWallY(obj)
+            % create Wall on the Y-Axsis
+            
+            
+            depth = obj.border(2);
+            hight = obj.border(3);
+            
+            % the reflection of the wall of the room is white by default
+            reflection = [1 1 1];
+            
+            d = floor(depth*obj.refinement); % Number of vertices in y (depth) direction
+            h = floor(hight*obj.refinement); % Number of vertices in z (hight) direction
+
+            % create Y-wall of room
+            normal = [1 0 0]; % normal for the following triangles
+            for i = 0:depth/d:depth-depth/d
+                for j = 0:hight/h:hight-hight/h
+                    obj.triangleList(end + 1) = triangle([0 i j], [0 i+depth/d j], [0 i j+hight/h], normal, reflection);
+                    obj.triangleList(end + 1) = triangle([0 i+depth/d j+hight/h], [0 i+depth/d j], [0 i j+hight/h], normal, reflection);
+                end
+            end
+        end
+        
+        function addWallX(obj)
+            % create Wall on the X-Axsis
+            
+            width = obj.border(1);
+            hight = obj.border(3);
+            
+            % the reflection of the wall of the room is white by default
+            reflection = [1 1 1];
+            
+            w = floor(width*obj.refinement); % Number of vertices in x (width) direction
+            h = floor(hight*obj.refinement); % Number of vertices in z (hight) direction
+            
+            % create X-wall of the room
+            normal = [0 1 0]; % normal for the following triangles
+            for i = 0:width/w:+width-width/w
+                for j = 0:hight/h:+hight-hight/h
+                    obj.triangleList(end + 1) = triangle([i 0 j], [i+width/w 0 j], [i 0 j+hight/h], normal, reflection);
+                    obj.triangleList(end + 1) = triangle([i+width/w 0 j+hight/h], [i+width/w 0 j], [i 0 j+hight/h], normal, reflection);
+                end
+            end
+        end
+        
+        function addCeilingLight(obj, positionX, positionY, positionZ, width, depth, emission)
+            % creates a lightsource at [positionX positionY positionZ] with
+            % the given width, depth and emision.
+            
+            w = floor(width*obj.refinement); % Number of vertices in x (width) direction
+            d = floor(depth*obj.refinement); % Number of vertices in y (depth) direction
+            
+            % create 2 sides of the cuboid (floor and ceiling)
+            normalCeiling = [0 0 -1]; % normal for the following triangles;
+            reflection = [0 0 0];
+            for i = positionX:width/w:positionX+width-width/w
+                for j = positionY:depth/d:positionY+depth-depth/d
+                    obj.triangleList(end + 1) = triangle([i j positionZ], [i+width/w j positionZ], [i j+depth/d positionZ], normalCeiling, reflection, emission);
+                    obj.triangleList(end + 1) = triangle([i+width/w j positionZ], [i j+depth/d positionZ], [i+width/w j+depth/d positionZ], normalCeiling, reflection, emission);
+                end
+            end
+        end
+        
     end
 end
 

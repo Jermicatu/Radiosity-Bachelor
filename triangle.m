@@ -1,5 +1,6 @@
 classdef triangle
-    % This class contains all data needed to draw a triangle
+    % This class contains all data needed to draw a triangle and 
+    % calculate the color values
     
     properties
         point1 % = [x1 y1 z1]
@@ -8,9 +9,9 @@ classdef triangle
         area % area of the triagle
         middle % the middle point of the triangle
         normal % true normal vector of the surface
-        color  % = [R G B] each between 1 and infinity
-        emission %  = [R G B] emited light, each between 1 and infinity
-        reflection % = [R G B] each between 1 and 0 
+        color  % = [R G B] = B(x)each between 1 and infinity
+        emission %  = [R G B] = E(x) emited light, each between 1 and infinity
+        reflection % = [R G B] = rho(x) each between 1 and 0  
                    % tells how much of ech color gets reflected
     end
     
@@ -47,10 +48,6 @@ classdef triangle
                 obj.reflection = givenReflection;
             end
             % in all other cases create an empty class
-            
-            function setColor(givenColor)
-                obj.color = givenColor;
-            end
            
         end
     end
