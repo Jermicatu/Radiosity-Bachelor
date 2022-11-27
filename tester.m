@@ -16,7 +16,4 @@ s.addFloor()
 
 % false = no grid
 % potency in geometric term is 3
-n = length(s.triangleList)
-tic
 s.plotScene(false, 4)
-toc
