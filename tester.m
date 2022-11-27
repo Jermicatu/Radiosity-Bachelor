@@ -1,7 +1,7 @@
 clear
 clc 
-
-s = scene([3 3 2], 2);
+ 
+s = scene([3 3 2], 4);
 
 s.addCeilingLight(2, 2, 2, 1, 1, [1 1 1])
 
@@ -9,8 +9,14 @@ s.addCuboid(2, 0, 1, 1, 1, 1, [1 0 0])
 s.addCuboid(1, 1, 1, 1, 1, 1, [0 1 0])
 s.addCuboid(0, 2, 1, 1, 1, 1, [0 0 1])
 
+% functions to add Walls and floor
 s.addFloor()
-s.addWallY()
-s.addWallX()
+%s.addWallY()
+%s.addWallX()
 
-s.plotScene(false)
+% false = no grid
+% potency in geometric term is 3
+n = length(s.triangleList)
+tic
+s.plotScene(false, 4)
+toc

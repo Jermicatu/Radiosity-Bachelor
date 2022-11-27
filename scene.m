@@ -78,7 +78,7 @@ classdef scene < handle
             end
         end
         
-        function geoTerm = calcGeoTerm(obj, i, j)
+        function geoTerm = calcGeoTerm(obj, i, j, potency)
             % calculates the geometrical term G(x_i,x_j)
             
             % get the variables
@@ -103,11 +103,11 @@ classdef scene < handle
                 % if none of the above is true then there is a direct
                 % unobscured line between x_i and x_j
                 % we calculate G(x_i,x_j)
-                geoTerm = term1*term2/(norm(middle1 - middle2))^3;
+                geoTerm = term1*term2/(norm(middle1 - middle2))^potency;
             end
         end
         
-        function calcColor(obj)
+        function calcColor(obj, potency)
             % calculates the color of all triangles in the scene
             
             % get the size of the matrices and vectors 
@@ -129,7 +129,7 @@ classdef scene < handle
                 
                 for j = 1:1:i
                     % calculate geometrical Term
-                    geoTerm = obj.calcGeoTerm(i, j);
+                    geoTerm = obj.calcGeoTerm(i, j, potency);
                     
                     if geoTerm ~= 0
                         % set values of the matrices
@@ -157,7 +157,7 @@ classdef scene < handle
             end
         end
             
-        function plotScene(obj, grid)
+        function plotScene(obj, grid, potency)
             % plots the entire Scene by plotting each individual triangle
             
             % hold on 
@@ -167,7 +167,7 @@ classdef scene < handle
             
             % first run fuction to calculate lighting
             
-            obj.calcColor();
+            obj.calcColor(potency);
             
             xlabel('x');
             ylabel('y');
