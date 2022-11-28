@@ -16,4 +16,4 @@ s.addFloor()
 
 % false = no grid
 % potency in geometric term is 3
-s.plotScene(false, 4)
+s.plotScene(4, false, false)

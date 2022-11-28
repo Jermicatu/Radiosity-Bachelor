@@ -157,11 +157,12 @@ classdef scene < handle
             end
         end
             
-        function plotScene(obj, grid, potency)
+        function plotScene(obj, potency, grid, normal)
             % plots the entire Scene by plotting each individual triangle
             
-            % hold on 
-            % this is needed so that we dont just create a plot for the last triangle
+            % potency: sets the potency in the geometric term
+            % grid: adds a grid if grid == true
+            % normal: shows the normals of the triangles if true
             
             % setting the labels for the plot
             
@@ -184,8 +185,21 @@ classdef scene < handle
             yMatrix = zeros(3, length(obj.triangleList));
             zMatrix = zeros(3, length(obj.triangleList));
             cMatrix = zeros(1, length(obj.triangleList), 3);
+            if normal == true
+               middleMatrix = zeros(length(obj.triangleList), 3);
+               normalMatrix = zeros(length(obj.triangleList), 3);
+            end
             
-            % Fill the matrices with the values
+            
+            % Prepare matrices for plotting of normals if requested
+            if normal == true
+                for i = 1:1:length(obj.triangleList)
+                    middleMatrix(i, :) = obj.triangleList(i).middle;
+                    normalMatrix(i, :) = obj.triangleList(i).normal;
+                end
+            end
+            
+            % Prepare the matrices for the plotting of the triangles
             for i = 1:1:length(obj.triangleList)
                 xMatrix(1, i) = obj.triangleList(i).point1(1);
                 xMatrix(2, i) = obj.triangleList(i).point2(1);
@@ -204,10 +218,22 @@ classdef scene < handle
             
             if grid == true
                 % plot with grid
+                hold on
                 patch(xMatrix, yMatrix, zMatrix, cMatrix);
+                if normal == true
+                    % plotts normals if requested
+                    quiver3(middleMatrix(:, 1), middleMatrix(:, 2), middleMatrix(:, 3), normalMatrix(:, 1), normalMatrix(:, 2), normalMatrix(:, 3))
+                end
+                hold off
             else
                 % plot without grid
+                hold on
                 patch(xMatrix, yMatrix, zMatrix, cMatrix, 'LineStyle', 'none');
+                if normal == true
+                    % plotts normals if requested
+                    quiver3(middleMatrix(:, 1), middleMatrix(:, 2), middleMatrix(:, 3), normalMatrix(:, 1), normalMatrix(:, 2), normalMatrix(:, 3))
+                end
+                hold off
             end
             
             % sets viewpoint to obj.border

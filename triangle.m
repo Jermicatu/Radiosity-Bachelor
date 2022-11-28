@@ -19,7 +19,7 @@ classdef triangle
         function obj = triangle(p1, p2, p3, givenNormal, givenReflection, givenEmission)
             % constructor that takes given values
             if nargin == 5
-                % only 4 variables making the triangle are given
+                % only 5 variables making the triangle and its reflection are given
                 obj.point1 = p1;
                 obj.point2 = p2;
                 obj.point3 = p3;
